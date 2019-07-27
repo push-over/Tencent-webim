@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+
+  <style>
+    .lable {
+      width: 100px;
+      text-align: justify;
+      display: inline-block;
+    }
+
+    .login {
+      margin: 100px auto;
+      position: relative;
+      padding: 20px;
+      width: 300px;
+      height: 200px;
+      border: 2px dashed #999999;
+    }
+
+    .btn-login {
+      position: absolute;
+      bottom: 50px;
+      right: 50px;
+      width: 100px;
+    }
+
+    #p_my_face {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border: 1px white solid;
+      margin: 10px;
+      float: left;
+    }
+
+    #t_my_name {
+      position: relative;
+      top: 10px;
+      left: 10px;
+      float: left;
+      font-size: 20px;
+      color: white;
+    }
+
+    #webim_demo {
+      display: none;
+    }
+
+    .chatpart {
+      width: 539px;
+      border: 0px red solid;
+      background: #d7eaf3;
+      margin: 20px auto;
+
+    }
+
+    .msgflow {
+      width: 525px;
+      height: 380px;
+      border: 1px rgb(181, 178, 178) solid;
+      padding: 20px 6px 0 6px;
+      background: #f5f5f5;
+      overflow: auto;
+    }
+
+    .msgflow .onemsg {
+      position: relative;
+    }
+
+    .msgflow .onemsg .msghead {
+      color: green;
+      line-height: 12px;
+      font-size: 12px;
+    }
+
+    .msgflow .onemsg .msgbody {
+      margin: 0 0 0 18px;
+      line-height: 13px;
+      font-size: 14px;
+    }
+
+    .msgflow .msgbody img {
+      max-width: 500px;
+    }
+
+    .msgedit {
+      width: 525px;
+      height: 100px;
+      border: 1px rgb(181, 178, 178) solid;
+      background: #f5f5f5;
+      padding: 6px 6px;
+      line-height: 1.5;
+    }
+
+    .sendbar {
+      width: 526px;
+      height: 30px;
+    }
+
+    .sendbtn {
+      float: right;
+      width: 80px;
+      margin-right: 10px;
+      font: 10px/1.5 "微软雅黑";
+    }
+
+    .headurlClass {
+      height: 30px;
+      width: 30px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="wrapper">
+    <img id="p_my_face">
+    <p id="t_my_name"></p>
+    <div class="login" id="login_dialog">
+      <div>
+        <span class="lable">identifier：</span>
+        <input id="login_account" value="" type="text" placeholder='请输入identifier' />
+      </div>
+      <div>
+        <span class="lable">userSig：</span>
+        <input id="login_pwd" value="" type="text" placeholder='userSig' />
+      </div>
+      <div>
+        <span class="lable">selToID：</span>
+        <input id="selToID" value="" type="text" placeholder='请输入selToID' />
+      </div>
+      <button class="btn-login" onclick="independentModeLogin()">登录</button>
+    </div>
+
+    <div id="webim_demo">
+      <div class="chatpart">
+        <div class="msgflow"></div>
+        <span id="msg_end" style="overflow:hidden"></span>
+        <textarea class="msgedit" cols="82" id="send_msg_text" onkeydown="onTextareaKeyDown()" rows="5"></textarea>
+        <div class="sendbar">
+          <button class="sendbtn" onclick="onSendMsg()" type="button">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/base.js"></script>
+    <script src="./js/webim.js"></script>
+    <script src="./js/login.js"></script>
+    <script src="./js/show_one_msg.js"></script>
+    <script src="./js/send_common_msg.js"></script>
+    <script src="./js/receive_new_msg.js"></script>
+
+    <script type="text/javascript">
+      // 将以下两个参数替换成您的配置
+      var sdkAppID = ''; // 填写第一步获取到的 sdkappid
+      //var accountType = ''; // 填写第二步设置账号体系集成获取到的 accountType , 已废弃
+
+      // 登录帐号
+      var identifier = '', // 填写第三步输入的 identifier，由您指定，可以在登录页面直接输入
+        userSig = ''; //填写第三步生成的userSig，可以在登录页面直接输入
+
+      //帐号模式，0-表示独立模式，1-表示托管模式(托管模式已经停用，请使用独立模式集成帐号)
+      var accountMode = 0;
+
+      //当前用户身份
+      var loginInfo = {
+        'sdkAppID': sdkAppID, //用户所属应用id,必填
+        // 'accountType': accountType, //用户所属应用帐号类型, 已废弃
+        'identifier': identifier, //当前用户ID,必须是否字符串类型，必填
+        'userSig': userSig,
+        //当前用户身份凭证，必须是字符串类型，必填
+        'identifierNick': null, //当前用户昵称，不用填写，登录接口会返回用户的昵称，如果没有设置，则返回用户的id
+        'headurl': './images/me.jpg' //当前用户默认头像，选填，如果设置过头像，则可以通过拉取个人资料接口来得到头像信息
+      };
+
+      var AdminAcount = 'qwe101';
+      var selType = webim.SESSION_TYPE.C2C; //当前聊天类型
+      var selToID = null; //当前选中聊天id（当聊天类型为私聊时，该值为好友帐号，否则为群号）
+      var selSess = null; //当前聊天会话对象
+      var recentSessMap = {}; //保存最近会话列表
+      var reqRecentSessCount = 50; //每次请求的最近会话条数，业务可以自定义
+
+      var isPeerRead = 1; //是否需要支持APP端已读回执的功能,默认为0。是：1，否：0。
+
+      //默认好友头像
+      var friendHeadUrl = './images/friend.jpg'; //仅demo使用，用于没有设置过头像的好友
+      var infoMap = {}; //初始化时，可以先拉取我的好友和我的群组信息
+
+      //监听连接状态回调变化事件
+      var onConnNotify = function (resp) {
+        var info;
+        switch (resp.ErrorCode) {
+          case webim.CONNECTION_STATUS.ON:
+            webim.Log.warn('建立连接成功: ' + resp.ErrorInfo);
+            break;
+          case webim.CONNECTION_STATUS.OFF:
+            info = '连接已断开，无法收到新消息，请检查下你的网络是否正常: ' + resp.ErrorInfo;
+            // alert(info);
+            webim.Log.warn(info);
+            break;
+          case webim.CONNECTION_STATUS.RECONNECT:
+            info = '连接状态恢复正常: ' + resp.ErrorInfo;
+            // alert(info);
+            webim.Log.warn(info);
+            break;
+          default:
+            webim.Log.error('未知连接状态: =' + resp.ErrorInfo);
+            break;
+        }
+      };
+
+      //IE9(含)以下浏览器用到的jsonp回调函数
+      function jsonpCallback(rspData) {
+        webim.setJsonpLastRspData(rspData);
+      }
+
+      //监听事件
+      var listeners = {
+        "onConnNotify": onConnNotify //监听连接状态回调变化事件,必填
+          ,
+        "jsonpCallback": jsonpCallback //IE9(含)以下浏览器用到的jsonp回调函数，
+          ,
+        "onMsgNotify": onMsgNotify //监听新消息(私聊，普通群(非直播聊天室)消息，全员推送消息)事件，必填
+          ,
+        "onLongPullingNotify": function (data) {
+          console.debug('onLongPullingNotify', data)
+        }
+      };
+
+      var isAccessFormalEnv = true; //是否访问正式环境
+
+      var isLogOn = false; //是否开启sdk在控制台打印日志
+
+      //初始化时，其他对象，选填
+      var options = {
+        'isAccessFormalEnv': isAccessFormalEnv, //是否访问正式环境，默认访问正式，选填
+        'isLogOn': isLogOn //是否开启控制台打印日志,默认开启，选填
+      }
+
+      var msgflow = document.getElementsByClassName("msgflow")[0];
+      var bindScrollHistoryEvent = {
+        init: function () {
+          msgflow.onscroll = function () {
+            if (msgflow.scrollTop == 0) {
+              msgflow.scrollTop = 10;
+              if (selType == webim.SESSION_TYPE.C2C) {
+                getPrePageC2CHistoryMsgs();
+              } else {
+                getPrePageGroupHistoryMsgs();
+              }
+
+            }
+          }
+        },
+        reset: function () {
+          msgflow.onscroll = null;
+        }
+      };
+    </script>
+</body>
+
+</html>
